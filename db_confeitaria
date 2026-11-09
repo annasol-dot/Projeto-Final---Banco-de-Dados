@@ -4,7 +4,6 @@
 -- CONFEITARIA SOLAMENTO  =
 -- ========================
 
-
 -- 1. CRIAR O DATA BASE
 
 DROP DATABASE IF EXISTS db_confeitaria;
@@ -58,6 +57,15 @@ CREATE TABLE ingrediente (
   FOREIGN KEY (id_fornecedor) REFERENCES fornecedor(id_fornecedor)
 );
 
+CREATE TABLE receita (
+  id_produto INT,
+  id_ingrediente INT,
+  quantidade DECIMAL(10,2) NOT NULL,
+  PRIMARY KEY (id_produto, id_ingrediente),
+  FOREIGN KEY (id_produto) REFERENCES produto(id_produto),
+  FOREIGN KEY (id_ingrediente) REFERENCES ingrediente(id_ingrediente)
+  );
+  
 CREATE TABLE pedido (
   id_pedido INT PRIMARY KEY AUTO_INCREMENT,
   data_pedido DATE NOT NULL,
@@ -68,6 +76,16 @@ CREATE TABLE pedido (
   id_funcionario INT NOT NULL,
   FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
   FOREIGN KEY (id_funcionario) REFERENCES funcionario(id_funcionario)
+);
+
+CREATE TABLE item_pedido (
+  id_pedido INT,
+  id_produto INT,
+  quantidade INT NOT NULL,
+  preco_unitario DECIMAL(8,2) NOT NULL,
+  PRIMARY KEY (id_pedido, id_produto),
+  FOREIGN KEY (id_pedido) REFERENCES pedido(id_pedido),
+  FOREIGN KEY (id_produto) REFERENCES produto(id_produto)
 );
 
 CREATE TABLE forma_pagamento (
@@ -114,6 +132,14 @@ INSERT INTO ingrediente (id_ingrediente, nome, unidade, estoque, estoque_minimo,
 (7, 'Morango', 'KG', 3.00, 4.00, 22.00, 1),
 (8, 'Cenoura', 'KG', 5.00, 8.00, 15.00, 1);
 
+INSERT INTO receita (id_produto, id_ingrediente, quantidade) VALUES
+(1, 1, 0.30), (1, 2, 0.25), (1, 3, 4.00), (1, 4, 0.20), (1, 5, 0.10),
+(2, 1, 0.30), (2, 2, 0.20), (2, 3, 4.00), (2, 4, 0.20), (2, 7, 0.40),
+(3, 1, 0.30), (3, 2, 0.25), (3, 3, 4.00), (3, 4, 0.20), (3, 8, 0.50),
+(4, 5, 0.01), (4, 6, 0.04),
+(5, 6, 0.04),
+(6, 1, 0.06), (6, 4, 0.03);
+
 INSERT INTO cliente (id_cliente, nome, telefone, email) VALUES
 (1, 'Ana Beatriz Silva', '61988881001', 'ana.silva@gmail.com'),
 (2, 'Carlos Eduardo Pereira', '61988881002', 'carlos.pereira@gmail.com'),
@@ -139,6 +165,16 @@ INSERT INTO pedido (id_pedido, data_pedido, tipo, status, id_cliente, id_funcion
 (4, '2026-10-25', 'ENCOMENDA', 'CONFIRMADO', 1, 1),
 (5, '2026-10-28', 'BALCAO',    'CANCELADO',  2, 2);
 
+INSERT INTO item_pedido (id_pedido, id_produto, quantidade, preco_unitario) VALUES
+(1, 3, 12, 3.50),
+(1, 4, 12, 3.50),
+(2, 1, 1, 65.00),
+(2, 3, 30, 3.50),
+(3, 5, 6, 6.00),
+(4, 2, 2, 72.00),
+(4, 3, 20, 3.50),
+(5, 5, 4, 6.00);
+
 INSERT INTO pagamento (id_pagamento, id_pedido, id_forma, valor, data_pagamento) VALUES
 (1, 1, 2, 84.00, '2026-10-20'),
 (2, 2, 1, 170.00, '2026-10-21'),
@@ -146,8 +182,7 @@ INSERT INTO pagamento (id_pagamento, id_pedido, id_forma, valor, data_pagamento)
 (4, 4, 2, 100.00, '2026-10-25');
 
 
--- 4. CONSULTAAS
-
+-- 4. CONSULTAS
 
 -- 1. Todas as colunas de uma tabela
 SELECT * FROM produto;
@@ -207,26 +242,61 @@ SELECT nome, preco
 FROM produto
 WHERE preco > (SELECT AVG(preco) FROM produto);
  
--- 15) JOIN com 3 tabelas: pedido, cliente e atendente
+-- 13. JOIN com 3 tabelas: pedido, cliente e atendente
 SELECT pedido.id_pedido, cliente.nome AS cliente, funcionario.nome AS atendente
 FROM pedido
 JOIN cliente ON pedido.id_cliente = cliente.id_cliente
 JOIN funcionario ON pedido.id_funcionario = funcionario.id_funcionario;
  
--- 16) LEFT JOIN: todos os clientes, mesmo os que nunca fizeram pedido
+-- 14. LEFT JOIN: todos os clientes, mesmo os que nunca fizeram pedido
 SELECT cliente.nome, COUNT(pedido.id_pedido) AS qtd_pedidos
 FROM cliente
 LEFT JOIN pedido ON pedido.id_cliente = cliente.id_cliente
 GROUP BY cliente.id_cliente, cliente.nome;
  
--- 17) JOIN + SUM + GROUP BY: total de cada pedido
+-- 15. JOIN + SUM + GROUP BY: total de cada pedido
 SELECT pedido.id_pedido,
        SUM(item_pedido.quantidade * item_pedido.preco_unitario) AS total
 FROM pedido
 JOIN item_pedido ON item_pedido.id_pedido = pedido.id_pedido
 GROUP BY pedido.id_pedido;
  
--- 18) UNION: nomes de clientes e funcionarios na mesma lista
+-- 16. UNION: nomes de clientes e funcionarios na mesma lista
 SELECT nome, 'CLIENTE' AS tipo FROM cliente
 UNION
 SELECT nome, 'FUNCIONARIO' FROM funcionario;
+
+-- 17. TRIGGER: sempre que um item for inserido em um pedido, os ingredientes sao baixados do estoque automaticamente.
+
+DELIMITER $$
+
+CREATE TRIGGER baixa_estoque
+AFTER INSERT ON item_pedido
+FOR EACH ROW
+BEGIN
+  UPDATE ingrediente
+  JOIN receita ON receita.id_ingrediente = ingrediente.id_ingrediente
+  SET ingrediente.estoque = ingrediente.estoque - (receita.quantidade * NEW.quantidade)
+  WHERE receita.id_produto = NEW.id_produto;
+END$$
+
+DELIMITER ;
+ 
+-- 18. PROCEDURE: mostra os pedidos de um cliente com o total de cada um. Para usar: CALL pedidos_do_cliente(1);
+
+DELIMITER $$
+
+CREATE PROCEDURE pedidos_do_cliente(IN p_id_cliente INT)
+BEGIN
+  SELECT pedido.id_pedido,
+         pedido.data_pedido,
+         SUM(item_pedido.quantidade * item_pedido.preco_unitario) AS total
+  FROM pedido
+  JOIN item_pedido ON item_pedido.id_pedido = pedido.id_pedido
+  WHERE pedido.id_cliente = p_id_cliente
+  GROUP BY pedido.id_pedido, pedido.data_pedido;
+END$$
+ 
+DELIMITER ;
+
+CALL pedidos_do_cliente(2)
