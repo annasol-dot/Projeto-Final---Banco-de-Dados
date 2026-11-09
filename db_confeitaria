@@ -163,3 +163,70 @@ SELECT nome, cargo, salario FROM funcionario;
  
 -- 5. Nome e telefone dos clientes
 SELECT nome, telefone FROM cliente;
+
+-- 6. Produtos acima de 10 reais, com 10% de aumento e 10% de desconto
+SELECT nome,
+       preco,
+       preco * 1.10 AS preco_reajustado,
+       preco * 0.90 AS preco_com_desconto
+FROM produto
+WHERE preco > 10;
+ 
+-- 7) Doces ou salgados que NAO custam mais de 5 reais
+SELECT nome, preco
+FROM produto
+WHERE (id_categoria = 2 OR id_categoria = 3)
+  AND NOT preco > 5;
+  
+-- 08. LIKE + IN: produtos que comecam com "B" nas categorias 1 e 2
+SELECT nome, preco
+FROM produto
+WHERE nome LIKE 'B%'
+  AND id_categoria IN (1, 2);
+ 
+-- 09. Pedidos de 20/10 a 25/10, do mais recente ao mais antigo
+SELECT id_pedido, data_pedido, tipo, status
+FROM pedido
+WHERE data_pedido BETWEEN '2026-10-20' AND '2026-10-25'
+ORDER BY data_pedido DESC;
+ 
+-- 10. GROUP BY: quantos produtos tem em cada categoria
+SELECT id_categoria, COUNT(*) AS qtd_produtos
+FROM produto
+GROUP BY id_categoria
+ORDER BY id_categoria;
+ 
+-- 11. Clientes que fizeram mais de 1 pedido
+SELECT id_cliente, COUNT(*) AS qtd_pedidos
+FROM pedido
+GROUP BY id_cliente
+HAVING COUNT(*) > 1;
+ 
+-- 12. Produtos mais caros que o preco medio
+SELECT nome, preco
+FROM produto
+WHERE preco > (SELECT AVG(preco) FROM produto);
+ 
+-- 15) JOIN com 3 tabelas: pedido, cliente e atendente
+SELECT pedido.id_pedido, cliente.nome AS cliente, funcionario.nome AS atendente
+FROM pedido
+JOIN cliente ON pedido.id_cliente = cliente.id_cliente
+JOIN funcionario ON pedido.id_funcionario = funcionario.id_funcionario;
+ 
+-- 16) LEFT JOIN: todos os clientes, mesmo os que nunca fizeram pedido
+SELECT cliente.nome, COUNT(pedido.id_pedido) AS qtd_pedidos
+FROM cliente
+LEFT JOIN pedido ON pedido.id_cliente = cliente.id_cliente
+GROUP BY cliente.id_cliente, cliente.nome;
+ 
+-- 17) JOIN + SUM + GROUP BY: total de cada pedido
+SELECT pedido.id_pedido,
+       SUM(item_pedido.quantidade * item_pedido.preco_unitario) AS total
+FROM pedido
+JOIN item_pedido ON item_pedido.id_pedido = pedido.id_pedido
+GROUP BY pedido.id_pedido;
+ 
+-- 18) UNION: nomes de clientes e funcionarios na mesma lista
+SELECT nome, 'CLIENTE' AS tipo FROM cliente
+UNION
+SELECT nome, 'FUNCIONARIO' FROM funcionario;
