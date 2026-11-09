@@ -1,0 +1,165 @@
+-- PROJETO FINAL - BANCO DE DADOS
+
+-- ========================
+-- CONFEITARIA SOLAMENTO  =
+-- ========================
+
+
+-- 1. CRIAR O DATA BASE
+
+DROP DATABASE IF EXISTS db_confeitaria;
+CREATE DATABASE db_confeitaria;
+USE db_confeitaria;
+
+-- 2. CRIAÇÃO DAS TABELAS
+
+CREATE TABLE categoria (
+  id_categoria INT PRIMARY KEY AUTO_INCREMENT,
+  nome VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE fornecedor (
+  id_fornecedor INT PRIMARY KEY AUTO_INCREMENT,
+  nome VARCHAR(80) NOT NULL,
+  telefone VARCHAR(15),
+  CNPJ CHAR(14)
+);
+
+CREATE TABLE cliente (
+  id_cliente INT PRIMARY KEY AUTO_INCREMENT,
+  nome VARCHAR(100) NOT NULL,
+  telefone VARCHAR(15),
+  email VARCHAR(100)
+);
+
+CREATE TABLE funcionario (
+  id_funcionario INT PRIMARY KEY AUTO_INCREMENT,
+  nome VARCHAR(100) NOT NULL,
+  cargo VARCHAR(30),
+  salario DECIMAL(8,2)
+);
+
+CREATE TABLE produto (
+  id_produto INT PRIMARY KEY AUTO_INCREMENT,
+  nome VARCHAR(80) NOT NULL,
+  preco DECIMAL(8,2) NOT NULL,
+  id_categoria INT NOT NULL,
+  FOREIGN KEY (id_categoria) REFERENCES categoria(id_categoria)
+);
+
+CREATE TABLE ingrediente (
+  id_ingrediente INT PRIMARY KEY AUTO_INCREMENT,
+  nome VARCHAR(60) NOT NULL,
+  unidade VARCHAR(10) NOT NULL,
+  estoque DECIMAL(10,2) NOT NULL,
+  estoque_minimo DECIMAL(10,2) NOT NULL,
+  custo DECIMAL(8,2),
+  id_fornecedor INT NOT NULL,
+  FOREIGN KEY (id_fornecedor) REFERENCES fornecedor(id_fornecedor)
+);
+
+CREATE TABLE pedido (
+  id_pedido INT PRIMARY KEY AUTO_INCREMENT,
+  data_pedido DATE NOT NULL,
+  valor_total DECIMAL(10,2),
+  tipo VARCHAR(10),        -- BALCAO ou ENCOMENDA
+  status VARCHAR(15),      -- ABERTO, CONFIRMADO, ENTREGUE ou CANCELADO
+  id_cliente INT NOT NULL,
+  id_funcionario INT NOT NULL,
+  FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
+  FOREIGN KEY (id_funcionario) REFERENCES funcionario(id_funcionario)
+);
+
+CREATE TABLE forma_pagamento (
+  id_forma INT PRIMARY KEY AUTO_INCREMENT,
+  nome VARCHAR(30) NOT NULL
+);
+
+CREATE TABLE pagamento (
+  id_pagamento INT PRIMARY KEY AUTO_INCREMENT,
+  id_pedido INT NOT NULL,
+  id_forma INT NOT NULL,
+  valor DECIMAL(10,2) NOT NULL,
+  data_pagamento DATE,
+  FOREIGN KEY (id_pedido) REFERENCES pedido(id_pedido),
+  FOREIGN KEY (id_forma) REFERENCES forma_pagamento(id_forma)
+);
+
+-- 3. INSERIR OS DADOS NAS TABELAS
+
+INSERT INTO categoria (id_categoria, nome) VALUES
+(1, 'Bolos'),
+(2, 'Doces'),
+(3, 'Salgados');
+
+INSERT INTO fornecedor (id_fornecedor, nome, telefone) VALUES
+(1, 'Atacadão do Padeiro', '61933334441'),
+(2, 'Laticínios Vale Verde', '61933335552');
+
+INSERT INTO produto (id_produto, nome, preco, id_categoria) VALUES
+(1, 'Bolo de chocolate', 65.00, 1),
+(2, 'Bolo de morango', 72.00, 1),
+(3, 'Bolo de cenoura', 50.00, 1),
+(4, 'Beijinho', 3.50, 2),
+(5, 'Brigadeiro', 3.50, 2),
+(6, 'Coxinha', 6.00, 3);
+
+INSERT INTO ingrediente (id_ingrediente, nome, unidade, estoque, estoque_minimo, custo, id_fornecedor) VALUES
+(1, 'Farinha de trigo', 'KG', 20.00, 5.00, 5.00, 1),
+(2, 'Açúcar', 'KG', 15.00, 5.00, 4.50, 1),
+(3, 'Ovos', 'UN', 100.00, 30.00, 0.90, 1),
+(4, 'Leite', 'L', 12.00, 10.00, 5.50, 2),
+(5, 'Chocolate em pó', 'KG', 4.00, 2.00, 28.00, 1),
+(6, 'Leite condensado', 'UN', 30.00, 10.00, 7.50, 2),
+(7, 'Morango', 'KG', 3.00, 4.00, 22.00, 1),
+(8, 'Cenoura', 'KG', 5.00, 8.00, 15.00, 1);
+
+INSERT INTO cliente (id_cliente, nome, telefone, email) VALUES
+(1, 'Ana Beatriz Silva', '61988881001', 'ana.silva@gmail.com'),
+(2, 'Carlos Eduardo Pereira', '61988881002', 'carlos.pereira@gmail.com'),
+(3, 'Fernanda Oliveira Santos', '61988881003', 'fernanda.santos@gmail.com'),
+(4, 'Gabriel Teixeira Gomes', '61988881004', 'gabriel.gomes@gmail.com'),
+(5, 'Juliana Costa Lima', '61988881005', 'juliana.costa@gmail.com');
+
+INSERT INTO funcionario (id_funcionario, nome, cargo, salario) VALUES
+(1, 'Marcos Almeida', 'Gerente', 5500.00),
+(2, 'Camila Dias', 'Atendente', 2100.00),
+(3, 'Juliana Ribeiro', 'Confeiteiro', 3200.00),
+(4, 'Rafael Souza', 'Atendente', 2100.00);
+
+INSERT INTO forma_pagamento (id_forma, nome) VALUES
+(1, 'Dinheiro'),
+(2, 'Pix'),
+(3, 'Cartão');
+
+INSERT INTO pedido (id_pedido, data_pedido, tipo, status, id_cliente, id_funcionario) VALUES
+(1, '2026-10-20', 'BALCAO',    'ENTREGUE',   4, 2),
+(2, '2026-10-21', 'ENCOMENDA', 'ENTREGUE',   2, 2),
+(3, '2026-10-22', 'BALCAO',    'ENTREGUE',   3, 3),
+(4, '2026-10-25', 'ENCOMENDA', 'CONFIRMADO', 1, 1),
+(5, '2026-10-28', 'BALCAO',    'CANCELADO',  2, 2);
+
+INSERT INTO pagamento (id_pagamento, id_pedido, id_forma, valor, data_pagamento) VALUES
+(1, 1, 2, 84.00, '2026-10-20'),
+(2, 2, 1, 170.00, '2026-10-21'),
+(3, 3, 3, 36.00, '2026-10-22'),
+(4, 4, 2, 100.00, '2026-10-25');
+
+
+-- 4. CONSULTAAS
+
+
+-- 1. Todas as colunas de uma tabela
+SELECT * FROM produto;
+ 
+-- 2. Somente algumas colunas
+SELECT nome, preco FROM produto;
+ 
+-- 3. DISTINCT: valores sem repeticao
+SELECT DISTINCT status FROM pedido;
+ 
+-- 4. Nome, cargo e salario dos funcionarios
+SELECT nome, cargo, salario FROM funcionario;
+ 
+-- 5. Nome e telefone dos clientes
+SELECT nome, telefone FROM cliente;
