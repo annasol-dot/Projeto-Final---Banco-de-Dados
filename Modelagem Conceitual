@@ -1,1 +1,25 @@
+A Doce Encanto é uma confeitaria que produz e vende bolos, doces, tortas e salgados.
+A empresa deseja um sistema para controlar o cardápio, as receitas, o estoque de ingredientes,
+as compras de fornecedores, os pedidos dos clientes e os pagamentos recebidos.
 
+Os produtos são organizados em categorias (bolos, doces, tortas e salgados). 
+Cada produto possui nome, preço de venda, tempo de preparo em minutos e uma indicação de se está ativo no cardápio, 
+pois um produto descontinuado não pode mais ser vendido, mas seu histórico deve ser preservado.
+
+Cada produto é feito a partir de uma receita, que lista os ingredientes e a quantidade de cada um usada para produzir uma unidade.
+Um ingrediente pode participar das receitas de vários produtos. Cada ingrediente possui nome, unidade de medida (quilo, litro ou unidade),
+estoque atual, estoque mínimo desejado e custo unitário.
+
+Os ingredientes são adquiridos de fornecedores, que possuem nome, CNPJ e telefone.
+Cada compra registra o fornecedor, o ingrediente, a quantidade, o valor total e a data.
+Toda compra aumenta o estoque do ingrediente correspondente.
+
+Os clientes são cadastrados com nome, telefone, e-mail (opcional) e data de cadastro. Os funcionários possuem nome, CPF, cargo (gerente, confeiteiro ou atendente), data de admissão e salário.
+
+Um pedido é feito por um cliente e atendido por um funcionário. O pedido pode ser de balcão, com retirada imediata, ou uma encomenda, que exige uma data de retirada. Cada pedido possui um status (aberto, confirmado, entregue ou cancelado) e um valor total. Um pedido contém um ou mais produtos, e para cada produto registram-se a quantidade e o preço unitário cobrado na ocasião, para que reajustes futuros não alterem pedidos antigos.
+
+O sistema deve impedir que um produto seja vendido se o estoque de qualquer ingrediente de sua receita for insuficiente, se o produto estiver inativo ou se o pedido já não estiver aberto. A cada item vendido, os ingredientes da receita são baixados do estoque e o valor total do pedido é atualizado. Se o pedido for cancelado, os ingredientes retornam ao estoque.
+
+Os pedidos são pagos por meio de uma ou mais parcelas, cada uma com valor, data e forma de pagamento (dinheiro, Pix, cartão de crédito ou cartão de débito). Isso permite, por exemplo, que uma encomenda seja paga com um sinal de 50% no momento do pedido e o restante na retirada.
+
+A gerência deseja consultar o cardápio, os produtos mais vendidos, o custo de produção e a margem de lucro de cada produto, os ingredientes abaixo do estoque mínimo, os pedidos com saldo a receber e o faturamento por forma de pagamento.
